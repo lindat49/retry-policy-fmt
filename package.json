@@ -1,0 +1,16 @@
+{
+  "name": "retry-policy-fmt",
+  "version": "0.1.0",
+  "description": "Validating parser and pretty printer for retry policy config files",
+  "private": true,
+  "license": "MIT",
+  "bin": {
+    "retryfmt": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
