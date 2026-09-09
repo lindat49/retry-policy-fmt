@@ -66,6 +66,12 @@ retryfmt - < checkout-api.retry
 With no argument, or `-` as the argument, `retryfmt` reads from stdin.
 Otherwise it treats the argument as a file path.
 
+Tests use Node's built-in test runner, so there's nothing to install:
+
+```
+npm test
+```
+
 Output is the canonical rendering of the policy: fixed field order, two-space
 indentation, durations normalized to the largest unit that divides evenly
 (`60000ms` becomes `1m`). Two files that describe the same policy with
