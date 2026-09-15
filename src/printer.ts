@@ -17,6 +17,12 @@ export function printPolicy(policy: RetryPolicy): string {
   return lines.join('\n')
 }
 
+// A blank line between blocks keeps a multi-policy file readable and
+// matches how the format reads when written by hand.
+export function printPolicies(policies: RetryPolicy[]): string {
+  return policies.map(printPolicy).join('\n\n')
+}
+
 function formatBackoff(backoff: Backoff): string {
   switch (backoff.kind) {
     case 'fixed':

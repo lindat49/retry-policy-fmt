@@ -203,6 +203,31 @@ class Parser {
   }
 
   parsePolicy(): RetryPolicy {
+    const { policy } = this.parsePolicyBlock()
+    this.expect('eof', 'end of input after the policy block')
+    return policy
+  }
+
+  // A file can hold more than one "policy { ... }" block back to back, so
+  // this keeps parsing blocks until it runs out of tokens. Names must be
+  // unique within the file - two policies sharing a name is almost always
+  // a copy-paste mistake, not an intentional override.
+  parsePolicies(): RetryPolicy[] {
+    const policies: RetryPolicy[] = []
+    const seenNames = new Map<string, Token>()
+    do {
+      const { policy, nameToken } = this.parsePolicyBlock()
+      const existing = seenNames.get(policy.name)
+      if (existing !== undefined) {
+        throw new PolicyError(`duplicate policy name '${policy.name}'`, nameToken.line, nameToken.col)
+      }
+      seenNames.set(policy.name, nameToken)
+      policies.push(policy)
+    } while (this.peek().type !== 'eof')
+    return policies
+  }
+
+  private parsePolicyBlock(): { policy: RetryPolicy; nameToken: Token } {
     const keyword = this.expect('ident', "'policy'")
     if (keyword.text !== 'policy') {
       throw new PolicyError(`expected 'policy', found '${keyword.text}'`, keyword.line, keyword.col)
@@ -281,9 +306,10 @@ class Parser {
       throw new PolicyError('give_up_after must be greater than zero', closeBrace.line, closeBrace.col)
     }
 
-    this.expect('eof', 'end of input after the policy block')
-
-    return { name, maxAttempts, backoff, jitter, retryOn, giveUpAfterMs }
+    return {
+      policy: { name, maxAttempts, backoff, jitter, retryOn, giveUpAfterMs },
+      nameToken,
+    }
   }
 
   private parseBackoff(): Backoff {
@@ -406,4 +432,9 @@ class Parser {
 export function parsePolicy(source: string): RetryPolicy {
   const tokens = new Lexer(source).tokenize()
   return new Parser(tokens).parsePolicy()
+}
+
+export function parsePolicies(source: string): RetryPolicy[] {
+  const tokens = new Lexer(source).tokenize()
+  return new Parser(tokens).parsePolicies()
 }

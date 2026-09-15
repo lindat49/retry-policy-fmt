@@ -41,6 +41,10 @@ Fields:
 Durations are a number directly followed by a unit: `ms`, `s`, `m`, or `h`
 (`200ms`, `1.5s`, `2m`). Comments start with `#` and run to end of line.
 
+A file can hold more than one `policy { ... }` block, one after another.
+Each policy in a file must have a unique name. The canonical output
+separates policies with a single blank line.
+
 ## Usage
 
 Build once with a TypeScript compiler on your `PATH`:
@@ -87,6 +91,6 @@ retryfmt: exponential factor must be greater than 1 (line 3, col 34)
 
 ## Status
 
-This is the initial skeleton: the grammar above is implemented end to end
-(lex, parse, validate, print) for a single policy per file. See the roadmap
-for what's next.
+The grammar above is implemented end to end (lex, parse, validate, print),
+including files with more than one policy block. See the roadmap for
+what's next.

@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parsePolicy, PolicyError } from './parser'
+import { parsePolicy, parsePolicies, PolicyError } from './parser'
 
 test('parses a full policy with all optional fields present', () => {
   const policy = parsePolicy(`
@@ -195,6 +195,40 @@ test('backoff rejects a missing required argument', () => {
 test('retry_on accepts a mix of status codes and bare words', () => {
   const policy = parsePolicy('policy "p" { max_attempts: 1 backoff: fixed(delay=1s) retry_on: [500, timeout, connection_error] }')
   assert.deepEqual(policy.retryOn, [500, 'timeout', 'connection_error'])
+})
+
+test('parsePolicies parses multiple policy blocks back to back', () => {
+  const policies = parsePolicies(`
+    policy "checkout-api" {
+      max_attempts: 5
+      backoff: fixed(delay=1s)
+      retry_on: [500]
+    }
+    policy "search-api" {
+      max_attempts: 3
+      backoff: linear(delay=200ms, increment=100ms)
+      retry_on: [timeout]
+    }
+  `)
+  assert.equal(policies.length, 2)
+  assert.equal(policies[0]?.name, 'checkout-api')
+  assert.equal(policies[1]?.name, 'search-api')
+})
+
+test('parsePolicies accepts a single block, same as parsePolicy', () => {
+  const policies = parsePolicies('policy "p" { max_attempts: 1 backoff: fixed(delay=1s) retry_on: [500] }')
+  assert.equal(policies.length, 1)
+  assert.equal(policies[0]?.name, 'p')
+})
+
+test('parsePolicies rejects two policies sharing a name', () => {
+  assert.throws(
+    () => parsePolicies(`
+      policy "p" { max_attempts: 1 backoff: fixed(delay=1s) retry_on: [500] }
+      policy "p" { max_attempts: 2 backoff: fixed(delay=1s) retry_on: [500] }
+    `),
+    /duplicate policy name 'p'/,
+  )
 })
 
 test('errors report line and column', () => {

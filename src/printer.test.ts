@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { printPolicy } from './printer'
+import { printPolicy, printPolicies } from './printer'
 import { parsePolicy } from './parser'
 import type { RetryPolicy } from './parser'
 
@@ -77,6 +77,12 @@ test('re-printing a parsed policy is idempotent (already-canonical input round-t
     '}',
   ].join('\n')
   assert.equal(printPolicy(parsePolicy(canonical)), canonical)
+})
+
+test('printPolicies joins multiple policies with a blank line between them', () => {
+  const output = printPolicies([basePolicy({ name: 'a' }), basePolicy({ name: 'b' })])
+  assert.equal(output, [printPolicy(basePolicy({ name: 'a' })), printPolicy(basePolicy({ name: 'b' }))].join('\n\n'))
+  assert.match(output, /^policy "a" \{[\s\S]*\}\n\npolicy "b" \{[\s\S]*\}$/)
 })
 
 test('differently formatted equivalent input prints identically to the canonical form', () => {
