@@ -70,6 +70,15 @@ retryfmt - < checkout-api.retry
 With no argument, or `-` as the argument, `retryfmt` reads from stdin.
 Otherwise it treats the argument as a file path.
 
+Pass `--check` to verify a file is already in canonical form instead of
+printing it. Nothing is written to stdout; `retryfmt` exits with status 1
+and prints a message to stderr if the input isn't already formatted, and
+exits 0 silently if it is. Useful in CI or a pre-commit hook:
+
+```
+retryfmt --check checkout-api.retry
+```
+
 Tests use Node's built-in test runner, so there's nothing to install:
 
 ```

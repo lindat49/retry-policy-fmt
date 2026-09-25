@@ -13,12 +13,40 @@ function readInput(path: string | undefined): string {
   return readFileSync(path, 'utf8')
 }
 
+interface Args {
+  path: string | undefined
+  check: boolean
+}
+
+function parseArgs(argv: string[]): Args {
+  let path: string | undefined
+  let check = false
+  for (const arg of argv) {
+    if (arg === '--check') {
+      check = true
+    } else if (path === undefined) {
+      path = arg
+    } else {
+      throw new Error(`unexpected extra argument '${arg}'`)
+    }
+  }
+  return { path, check }
+}
+
 function main(): void {
-  const path = process.argv[2]
+  let args: Args
+  try {
+    args = parseArgs(process.argv.slice(2))
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    process.stderr.write(`retryfmt: ${message}\n`)
+    process.exitCode = 1
+    return
+  }
 
   let source: string
   try {
-    source = readInput(path)
+    source = readInput(args.path)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     process.stderr.write(`retryfmt: could not read input: ${message}\n`)
@@ -28,7 +56,16 @@ function main(): void {
 
   try {
     const policies = parsePolicies(source)
-    process.stdout.write(printPolicies(policies) + '\n')
+    const formatted = printPolicies(policies) + '\n'
+    if (args.check) {
+      if (formatted !== source) {
+        const label = args.path === undefined || args.path === '-' ? 'stdin' : args.path
+        process.stderr.write(`retryfmt: ${label} is not formatted\n`)
+        process.exitCode = 1
+      }
+      return
+    }
+    process.stdout.write(formatted)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     process.stderr.write(`retryfmt: ${message}\n`)
